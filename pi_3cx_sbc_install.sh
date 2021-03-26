@@ -17,12 +17,12 @@ then
     read NAME
     if [[ "no" == $(ask_yes_or_no "Install will continue using $NAME as the hostname for monitoring. Are you sure?") || \
       "no" == $(ask_yes_or_no "Are you *really* sure?") ]]
-    then
-      echo "Skipped - please re-run script to begin again"
+      then
+        echo "Skipped - please re-run script to begin again"
       exit 0
-      fi
+    fi
 fi
-if [ "no" == $(ask_yes_or_no "Set password to IBT default?") ]
+if [ "no" == $(ask_yes_or_no "Set pi user password to IBT default?") ]
     then
         echo "Please enter password."
         read PASS
@@ -30,10 +30,10 @@ if [ "no" == $(ask_yes_or_no "Set password to IBT default?") ]
           "no" == $(ask_yes_or_no "Are you *really* sure?") ]]
           then
             echo "Please re-run install script with correct details"
-            exit 0
-            fi
+          exit 0
+        fi
 fi
-           echo "Great, continuing to update packages and install monitoring..."
+echo "Great, continuing to update packages and install monitoring..."
 echo "Checking for updates..."
 if ! /usr/bin/sudo /usr/bin/apt update 2>&1 | grep -q '^[WE]:'; then
     echo "Update check completed" 
@@ -41,20 +41,15 @@ else
     echo "Unable to check for updates - please verify internet connectivity"
     exit 1
 fi
-#OUTPUT=`apt-get update 2>&1`
-
-#if [[ $? != 0 ]]; then
-#  echo "$OUTPUT"
-#fi
-#/usr/bin/sudo /usr/bin/apt update
-/usr/bin/sudo sh -c "'echo pi:$PASS | chpasswd'"
+echo "setting user pi password..."
+echo "pi:$PASS" | /usr/bin/sudo chpasswd
 echo "Upgrading as needed..."
 /usr/bin/sudo /usr/bin/apt -y upgrade
 echo "Installing monitoring agent..."
 /usr/bin/sudo /usr/bin/apt install zabbix-agent
 echo "system updated and zabbix monitoring agent installed."
 echo "Configuring monitoring agent..."
-# edit zabbix_agentd.conf replace server=127.0.0.1 with server=213.218.197.155 set hostname to $NAME
+# edit zabbix_agentd.conf set zabbix server IP to 213.218.197.155 set hostname to $NAME
 sed -i s/^Server=127.0.0.1/Server=213.218.197.155/ /etc/zabbix/zabbix_agentd.conf
 sed -i s/^ServerActive=127.0.0.1/ServerActive=213.218.197.155/ /etc/zabbix/zabbix_agentd.conf
 sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
@@ -68,8 +63,13 @@ teamviewer passwd easytr1dent >/dev/null 2>&1
 echo "Please run "teamviewer setup" to add Teamviewer to the IBT account - check IT Queue to authorise addition"
 if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi \(wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip\), if instructions have changed then say no?") ]
     then
-      echo "Please go to 3cx website for latest instructions to install SBC/PBX and continue manually"
-      exit 0
+        echo "Please go to 3cx website for latest instructions to install SBC/PBX and continue manually"
+        echo "Don't forget to complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
+        echo "Below is a list of the info used for this setup"
+        echo "Monitoring hostname = $NAME"
+        echo "Password for pi = $PASS"
+        /usr/bin/sudo teamviewer info | grep "TeamViewer ID:"
+    exit 0
 fi
 /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
 echo "Don't forget to complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
@@ -77,3 +77,5 @@ echo "Below is a list of the info used for this setup"
 echo "Monitoring hostname = $NAME"
 echo "Password for pi = $PASS"
 /usr/bin/sudo teamviewer info | grep "TeamViewer ID:"
+echo "Please update helpdesk asset and ticket/job progress sheet"
+echo "Goodbye"
