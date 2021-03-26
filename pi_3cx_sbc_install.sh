@@ -64,5 +64,16 @@ sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
 echo "Monitoring agent configured"
 echo "Installing Teamviewer host"
 sudo apt install teamviewer-host
-teamviewer passwd easytr1dent
+teamviewer passwd easytr1dent >/dev/null 2>&1
 echo "Please run "teamviewer setup" to add Teamviewer to the IBT account - check IT Queue to authorise addition"
+if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi \(wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip\), if instructions have changed then say no?") ]
+    then
+      echo "Please go to 3cx website for latest instructions to install SBC/PBX and continue manually"
+      exit 0
+fi
+/usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
+echo "Don't forget to complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
+echo "Below is a list of the info used for this setup"
+echo "Monitoring hostname = $NAME"
+echo "Password for pi = $PASS"
+/usr/bin/sudo teamviewer info | grep "TeamViewer ID:"
