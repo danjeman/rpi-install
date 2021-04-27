@@ -60,7 +60,18 @@ echo "Monitoring agent configured"
 echo "Installing Teamviewer host"
 sudo apt install teamviewer-host
 teamviewer passwd easytr1dent >/dev/null 2>&1
+# Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config
+echo "Setting display resolution to 1023x768 for remote Teamviewer access"
+sed -i s/^\#hdmi_group=/hdmi_group=2/ /boot/config.txt
+sed -i s/^\#hdmi_mode=/hdmi_mode=16/ /boot/config.txt
 echo "Please run "teamviewer setup" to add Teamviewer to the IBT account - check IT Queue to authorise addition"
+# ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
+if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
+    then
+        echo "Please ensure Fan is manually enabled if required or install appropriate controls for Fan accessory in use"
+    else
+        echo dtoverlay=gpio-fan,gpiopin=18,temp=55000 >> /boot/config.txt
+fi
 if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi \(wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip\), if instructions have changed then say no?") ]
     then
         echo "Please go to 3cx website for latest instructions to install SBC/PBX and continue manually"
