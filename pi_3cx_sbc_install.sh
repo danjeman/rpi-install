@@ -70,7 +70,8 @@ if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon 
     then
         echo "Please ensure Fan is manually enabled if required or install appropriate controls for Fan accessory in use"
     else
-        echo dtoverlay=gpio-fan,gpiopin=18,temp=55000 >> /boot/config.txt
+        echo "# Fan speed control start at 55C" >> /boot/config.txt
+        echo "dtoverlay=gpio-fan,gpiopin=18,temp=55000" >> /boot/config.txt
 fi
 if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi \(wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip\), if instructions have changed then say no?") ]
     then
