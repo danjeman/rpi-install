@@ -62,8 +62,8 @@ sudo apt install teamviewer-host
 teamviewer passwd easytr1dent >/dev/null 2>&1
 # Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config
 echo "Setting display resolution to 1023x768 for remote Teamviewer access"
-sed -i s/^\#hdmi_group=/hdmi_group=2/ /boot/config.txt
-sed -i s/^\#hdmi_mode=/hdmi_mode=16/ /boot/config.txt
+sed -i s/^\#hdmi_group=1/hdmi_group=2/ /boot/config.txt
+sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ /boot/config.txt
 echo "Please run "teamviewer setup" to add Teamviewer to the IBT account - check IT Queue to authorise addition"
 # ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
 if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
