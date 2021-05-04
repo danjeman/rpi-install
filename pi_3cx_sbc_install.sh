@@ -57,14 +57,18 @@ sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
 /usr/sbin/usermod -a -G video zabbix
 /usr/bin/sudo /usr/sbin/service zabbix-agent restart
 echo "Monitoring agent configured"
-echo "Installing Teamviewer host"
-sudo apt install teamviewer-host
-teamviewer passwd easytr1dent >/dev/null 2>&1
-# Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config
+# Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config enable uart if not already
 echo "Setting display resolution to 1023x768 for remote Teamviewer access"
 sed -i s/^\#hdmi_group=1/hdmi_group=2/ /boot/config.txt
 sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ /boot/config.txt
-echo "Please run "teamviewer setup" to add Teamviewer to the IBT account - check IT Queue to authorise addition"
+grep -qxF 'enable_uart=1' /boot/config.txt || echo "enable_uart=1" >> /boot/config.txt
+echo $NAME > /etc/hostname
+sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1\t$NAME/g /etc/hosts
+echo "Installing Teamviewer host"
+wget https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
+dpkg -i teamviewer-host_armhf.deb
+apt -y --fix-broken install
+teamviewer passwd easytr1dent >/dev/null 2>&1
 # ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
 if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
     then
@@ -76,7 +80,7 @@ fi
 if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi \(wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip\), if instructions have changed then say no?") ]
     then
         echo "Please go to 3cx website for latest instructions to install SBC/PBX and continue manually"
-        echo "Don't forget to complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
+        echo "Don't forget to reboot and complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
         echo "Below is a list of the info used for this setup"
         echo "Monitoring hostname = $NAME"
         echo "Password for pi = $PASS"
@@ -84,7 +88,7 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi \(wget https:
     exit 0
 fi
 /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
-echo "Don't forget to complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
+echo "Don't forget to reboot and then complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
 echo "Below is a list of the info used for this setup"
 echo "Monitoring hostname = $NAME"
 echo "Password for pi = $PASS"
