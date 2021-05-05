@@ -66,7 +66,7 @@ echo $NAME > /etc/hostname
 sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1\t$NAME/g /etc/hosts
 echo "Installing Teamviewer host"
 wget https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
-dpkg -i teamviewer-host_armhf.deb
+dpkg -i teamviewer-host_armhf.deb >/dev/null 2>&1
 apt -y --fix-broken install
 teamviewer passwd easytr1dent >/dev/null 2>&1
 # ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
