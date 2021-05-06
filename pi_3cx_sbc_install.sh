@@ -75,11 +75,11 @@ wget https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
 dpkg -i teamviewer-host_armhf.deb >/dev/null 2>&1
 apt -y --fix-broken install
 teamviewer passwd easytr1dent >/dev/null 2>&1
-tvid=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:")
+tvid=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//')
 # ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
 if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
     then
-        echo "${tyellow}Please ensure Fan is manually enabled if required or install appropriate controls for Fan accessory in use.{$tdef}"
+        echo "${tyellow}Please ensure Fan is manually enabled if required or install appropriate controls for Fan accessory in use.${tdef}"
     else
         echo "# Fan speed control start at 55C" >> /boot/config.txt
         echo "dtoverlay=gpio-fan,gpiopin=18,temp=55000" >> /boot/config.txt
@@ -91,7 +91,7 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi (wget https:/
         echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
         echo "${tyellow}Monitoring hostname = $NAME"
         echo "Password for pi = $PASS"
-        echo "${tvid}"
+        echo "Teamviewer ID = ${tvid}"
         echo "MAC address = $MAC.${tdef}"
         echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
         echo "Goodbye"
@@ -102,7 +102,7 @@ echo "${tyellow}Don't forget to reboot and then complete Teamviewer setup proces
 echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
 echo "Monitoring hostname = $NAME"
 echo "Password for pi = $PASS"
-/usr/bin/sudo teamviewer info | grep "TeamViewer ID:"
+echo "Teamviewer ID = ${tvid}"
 echo "MAC address = $MAC"
 echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
 echo "Goodbye"
