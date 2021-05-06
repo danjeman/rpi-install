@@ -6,6 +6,11 @@ function ask_yes_or_no() {
         *)     echo "no" ;;
     esac
 }
+tred=$(tput setaf 1)
+tgreen=$(tput setaf 2)
+tyellow=$(tput setaf 3)
+tdef=$(tput sgr0)
+MAC=$(cat /sys/class/net/eth0/address)
 PASS=e4syTr1d3nt
 echo "#####IBT Rpi 3CX SBC install script#####"
 echo "Please, enter hostname to use for device monitoring - e.g gch.svg.sbc.3cx.co.uk"
@@ -36,9 +41,9 @@ fi
 echo "Great, continuing to update packages and install monitoring..."
 echo "Checking for updates..."
 if ! /usr/bin/sudo /usr/bin/apt update 2>&1 | grep -q '^[WE]:'; then
-    echo "Update check completed" 
+    echo "${tgreen}Update check completed.${tdef}" 
 else
-    echo "Unable to check for updates - please verify internet connectivity"
+    echo "${tred}Unable to check for updates - please verify internet connectivity.${tdef}"
     exit 1
 fi
 echo "setting user pi password..."
@@ -56,7 +61,7 @@ sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
 /usr/bin/curl -o /etc/zabbix/zabbix_agentd.conf.d/userparameter_rpi.conf https://raw.githubusercontent.com/danjeman/rpi-zabbix/main/userparameter_rpi.conf
 /usr/sbin/usermod -a -G video zabbix
 /usr/bin/sudo /usr/sbin/service zabbix-agent restart
-echo "Monitoring agent configured"
+echo "${tgreen}Monitoring agent configured.${tdef}"
 # Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config enable uart if not already
 echo "Setting display resolution to 1023x768 for remote Teamviewer access"
 sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ /boot/config.txt
@@ -89,10 +94,11 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi \(wget https:
     exit 0
 fi
 /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
-echo "Don't forget to reboot and then complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
-echo "Below is a list of the info used for this setup"
+echo "${tyellow}Don't forget to reboot and then complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
+echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.$(tdef)"
 echo "Monitoring hostname = $NAME"
 echo "Password for pi = $PASS"
 /usr/bin/sudo teamviewer info | grep "TeamViewer ID:"
-echo "Please update helpdesk asset and ticket/job progress sheet"
+echo "MAC address = $MAC"
+echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
 echo "Goodbye"
