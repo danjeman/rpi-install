@@ -59,6 +59,7 @@ sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
 echo "Monitoring agent configured"
 # Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config enable uart if not already
 echo "Setting display resolution to 1023x768 for remote Teamviewer access"
+sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ /boot/config.txt
 sed -i s/^\#hdmi_group=1/hdmi_group=2/ /boot/config.txt
 sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ /boot/config.txt
 grep -qxF 'enable_uart=1' /boot/config.txt || echo "enable_uart=1" >> /boot/config.txt
