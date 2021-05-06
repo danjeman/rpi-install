@@ -78,19 +78,22 @@ teamviewer passwd easytr1dent >/dev/null 2>&1
 # ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
 if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
     then
-        echo "Please ensure Fan is manually enabled if required or install appropriate controls for Fan accessory in use"
+        echo "${tyellow}Please ensure Fan is manually enabled if required or install appropriate controls for Fan accessory in use.{$tdef}"
     else
         echo "# Fan speed control start at 55C" >> /boot/config.txt
         echo "dtoverlay=gpio-fan,gpiopin=18,temp=55000" >> /boot/config.txt
 fi
 if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi \(wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip\), if instructions have changed then say no?") ]
     then
-        echo "Please go to 3cx website for latest instructions to install SBC/PBX and continue manually"
-        echo "Don't forget to reboot and complete Teamviewer setup process - "teamviewer setup" to add this device to the IBT account"
-        echo "Below is a list of the info used for this setup"
+        echo "${tred}Please go to 3cx website for latest instructions to install SBC/PBX and continue manually.${tdef}"
+        echo "${tyellow}Don't forget to reboot and complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
+        echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.$(tdef)"
         echo "Monitoring hostname = $NAME"
         echo "Password for pi = $PASS"
         /usr/bin/sudo teamviewer info | grep "TeamViewer ID:"
+        echo "MAC address = $MAC"
+        echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
+        echo "Goodbye"
     exit 0
 fi
 /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
