@@ -40,6 +40,8 @@ if [ "no" == $(ask_yes_or_no "Set pi user password to IBT default?") ]
 fi
 echo "Great, continuing to update packages and install monitoring..."
 echo "Checking for updates..."
+# if buster suite changed to oldstable then will error (E) advising of that on first run of update check - run it twice just in case
+/usr/bin/sudo /usr/bin/apt -y update 2>&1
 if ! /usr/bin/sudo /usr/bin/apt -y update 2>&1 | grep -q '^[WE]:'; then
     echo "${tgreen}Update check completed.${tdef}" 
 else
