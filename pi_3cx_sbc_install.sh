@@ -40,7 +40,7 @@ if [ "no" == $(ask_yes_or_no "Set pi user password to IBT default?") ]
 fi
 echo "Great, continuing to update packages and install monitoring..."
 echo "Checking for updates..."
-if ! /usr/bin/sudo /usr/bin/apt update 2>&1 | grep -q '^[WE]:'; then
+if ! /usr/bin/sudo /usr/bin/apt -y update 2>&1 | grep -q '^[WE]:'; then
     echo "${tgreen}Update check completed.${tdef}" 
 else
     echo "${tred}Unable to check for updates - please verify internet connectivity.${tdef}"
