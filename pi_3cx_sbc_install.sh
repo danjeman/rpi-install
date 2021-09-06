@@ -51,7 +51,7 @@ echo "pi:$PASS" | /usr/bin/sudo chpasswd
 echo "Upgrading as needed..."
 /usr/bin/sudo /usr/bin/apt -y upgrade
 echo "Installing monitoring agent..."
-/usr/bin/sudo /usr/bin/apt install zabbix-agent
+/usr/bin/sudo /usr/bin/apt -y install zabbix-agent
 echo "system updated and zabbix monitoring agent installed."
 echo "Configuring monitoring agent..."
 # edit zabbix_agentd.conf set zabbix server IP to 213.218.197.155 set hostname to $NAME
