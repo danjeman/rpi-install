@@ -53,8 +53,8 @@ echo "pi:$PASS" | /usr/bin/sudo chpasswd
 echo "Upgrading as needed..."
 /usr/bin/sudo /usr/bin/apt -y upgrade
 echo "Installing monitoring agent..."
-/usr/bin/sudo /usr/bin/apt -y install zabbix-agent
-echo "system updated and zabbix monitoring agent installed."
+/usr/bin/sudo /usr/bin/apt -y install zabbix-agent nmap tcpdump
+echo "system updated and zabbix monitoring agent and network tools installed."
 echo "Configuring monitoring agent..."
 # edit zabbix_agentd.conf set zabbix server IP to 213.218.197.155 set hostname to $NAME
 sed -i s/^Server=127.0.0.1/Server=213.218.197.155/ /etc/zabbix/zabbix_agentd.conf
@@ -77,7 +77,7 @@ wget https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
 dpkg -i teamviewer-host_armhf.deb >/dev/null 2>&1
 apt -y --fix-broken install
 teamviewer passwd easytr1dent >/dev/null 2>&1
-tvid=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//')
+TVID=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//')
 # ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
 if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
     then
@@ -93,7 +93,7 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi (wget https:/
         echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
         echo "${tyellow}Monitoring hostname =${tdef} $NAME"
         echo "${tyellow}Password for pi =${tdef} $PASS"
-        echo "${tyellow}Teamviewer ID =${tdef} ${tvid}"
+        echo "${tyellow}Teamviewer ID =${tdef} $TVID"
         echo "${tyellow}MAC address =${tdef} $MAC."
         echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
         echo "Goodbye"
@@ -104,7 +104,7 @@ echo "${tyellow}Don't forget to reboot and then complete Teamviewer setup proces
 echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
 echo "${tyellow}Monitoring hostname =${tdef} $NAME"
 echo "${tyellow}Password for pi =${tdef} $PASS"
-echo "${tyellow}Teamviewer ID =${tdef} ${tvid}"
+echo "${tyellow}Teamviewer ID =${tdef} $TVID"
 echo "${tyellow}MAC address =${tdef} $MAC."
 echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
 echo "Goodbye"
