@@ -76,7 +76,7 @@ echo "Installing Teamviewer host"
 wget https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
 dpkg -i teamviewer-host_armhf.deb >/dev/null 2>&1
 apt -y --fix-broken install
-teamviewer passwd easytr1dent >/dev/null 2>&1
+teamviewer passwd easytr1dent25 >/dev/null 2>&1
 TVID=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//')
 # ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
 if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
