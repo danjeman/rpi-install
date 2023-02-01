@@ -75,7 +75,7 @@ sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1\t$NAME/g /etc/hosts
 echo "Installing Teamviewer host"
 # wget https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb ## Current 15.38.3 breaks teamviewer on pi so old version required
 # dpkg -i teamviewer-host_armhf.deb >/dev/null 2>&1
-wget https://dl.teamviewer.com/download/linux/version_15x/teamviewer-host_15.33.7_armhf.deb
+wget https://dl.teamviewer.com/download/linux/version_15x/teamviewer-host_15.35.7_armhf.deb
 dpkg -i teamviewer-host_15.33.7_armhf.deb >/dev/null 2>&1
 apt -y --fix-broken install
 teamviewer passwd easytr1dent25 >/dev/null 2>&1
