@@ -15,6 +15,14 @@ PASS=e4syTr1d3nt
 model=$(cat /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
 frver=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
+platform=$(uname -m)
+
+# if not a pi error and exit - check for armxxx architecture in uname -m
+if ! [[ "$platform" =~ "arm" ]]
+then
+    echo "This install script is for Raspberry Pi's only, please use the correct script for your hardware"
+    exit 1
+fi
 echo "#####IBT Rpi 3CX SBC install script#####"
 echo "Please, enter hostname to use for device monitoring - e.g gch.svg.sbc.3cx.co.uk"
 read NAME
