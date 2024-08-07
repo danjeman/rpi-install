@@ -12,6 +12,9 @@ tyellow=$(tput setaf 3)
 tdef=$(tput sgr0)
 MAC=$(cat /sys/class/net/eth0/address)
 PASS=e4syTr1d3nt
+model=$(cat /proc/device-tree/model)
+version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
+frver=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
 echo "#####IBT Rpi 3CX SBC install script#####"
 echo "Please, enter hostname to use for device monitoring - e.g gch.svg.sbc.3cx.co.uk"
 read NAME
@@ -40,6 +43,8 @@ if [ "no" == $(ask_yes_or_no "Set pi user password to IBT default?") ]
 fi
 echo "Great, continuing to update packages and install monitoring..."
 echo "Checking for updates..."
+# Detect if buster or bookworm and set options depending on $model
+# $version == 10 then buster == 11 then bullseye ==12 bookworm ==13 trixie
 # if buster suite changed to oldstable then will error (E) advising of that on first run of update check - run it twice just in case
 /usr/bin/sudo /usr/bin/apt -y update 2>&1
 if ! /usr/bin/sudo /usr/bin/apt -y update 2>&1 | grep -q '^[WE]:'; then
@@ -97,6 +102,8 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi (wget https:/
         echo "${tyellow}Password for pi =${tdef} $PASS"
         echo "${tyellow}Teamviewer ID =${tdef} $TVID"
         echo "${tyellow}MAC address =${tdef} $MAC."
+        echo "${tyellow}Model =${tdef} $model."
+        echo "${tyellow}Debian ver =${tdef} $frver."
         echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
         echo "Goodbye"
     exit 0
@@ -108,5 +115,7 @@ echo "${tyellow}Monitoring hostname =${tdef} $NAME"
 echo "${tyellow}Password for pi =${tdef} $PASS"
 echo "${tyellow}Teamviewer ID =${tdef} $TVID"
 echo "${tyellow}MAC address =${tdef} $MAC."
+echo "${tyellow}Model =${tdef} $model."
+echo "${tyellow}Debian ver =${tdef} $frver."
 echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
 echo "Goodbye"
