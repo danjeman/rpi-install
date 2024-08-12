@@ -14,8 +14,12 @@ MAC=$(cat /sys/class/net/eth0/address)
 PASS=e4syTr1d3nt
 model=$(cat /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
-frver=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
+frver=$(awk -F= '$1=="VERSION" { print $2 ;}' /etc/os-release |tr -d \")
 platform=$(uname -m)
+tvpi4=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
+tvpi5=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
+bwboot=/boot/firmware/config.txt
+busboot=/boot/config.txt
 
 # if not a pi error and exit - check for armxxx architecture in uname -m
 if ! [[ "$platform" =~ "arm" ]]
@@ -53,6 +57,10 @@ echo "Great, continuing to update packages and install monitoring..."
 echo "Checking for updates..."
 # Detect if buster or bookworm and set options depending on $model
 # $version == 10 then buster == 11 then bullseye ==12 bookworm ==13 trixie
+# upgrade from Buster using following 3 lines wget https://downloads-global.3cx.com/downloads/sbcosupgrade/sbcosupgrade.sh
+# chmod +x sbcosupgrade.sh
+# sudo bash sbcosupgrade.sh
+# install new v20 on pi sudo bash -c "$(wget -qO- http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip)"
 # if buster suite changed to oldstable then will error (E) advising of that on first run of update check - run it twice just in case
 /usr/bin/sudo /usr/bin/apt -y update 2>&1
 if ! /usr/bin/sudo /usr/bin/apt -y update 2>&1 | grep -q '^[WE]:'; then
