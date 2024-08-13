@@ -68,6 +68,7 @@ fi
 # platform specific variables and settings
 if [[ "$platform" == "arm64" ]]
     then
+    apt install raspberrypi-ui-mods
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
     tvi=teamviewer-host_arm64.deb
     boot=/boot/firmware/config.txt
