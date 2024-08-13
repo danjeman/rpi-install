@@ -25,7 +25,7 @@ if [[ "$platform" == "arm64" ]]
     else
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
     tvi=teamviewer-host_armhf.deb
-    boot=/boot/config/txt
+    boot=/boot/config.txt
     sbci="wget -qO- https://downloads-global.3cx.com/downloads/misc/d10pi.zip"
     fi
 
