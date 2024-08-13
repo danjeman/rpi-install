@@ -16,12 +16,20 @@ model=$(cat /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
 frver=$(awk -F= '$1=="VERSION" { print $2 ;}' /etc/os-release |tr -d \")
 platform=$(uname -m)
-tvpi4=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
-tvpi5=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
-bwboot=/boot/firmware/config.txt
-busboot=/boot/config.txt
+if [[ "$platform" == "arm64" ]]
+    then
+    tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
+    tvi=teamviewer-host_arm64.deb
+    boot=/boot/firmware/config.txt
+    sbci="wget -qO- http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip"
+    else
+    tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
+    tvi=teamviewer-host_armhf.deb
+    boot=/boot/config/txt
+    sbci="wget -qO- https://downloads-global.3cx.com/downloads/misc/d10pi.zip"
+    fi
 
-# if not a pi error and exit - check for armxxx architecture in uname -m
+# if not a pi running arm image error and exit - check for armxxx architecture in uname -m - deault pi os64 is aarch64 not arm64
 if ! [[ "$platform" =~ "arm" ]]
 then
     echo "This install script is for Raspberry Pi's only, please use the correct script for your hardware"
@@ -87,29 +95,37 @@ sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
 echo "${tgreen}Monitoring agent configured.${tdef}"
 # Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config enable uart if not already
 echo "Setting display resolution to 1023x768 for remote Teamviewer access"
-sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ /boot/config.txt
-sed -i s/^\#hdmi_group=1/hdmi_group=2/ /boot/config.txt
-sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ /boot/config.txt
-grep -qxF 'enable_uart=1' /boot/config.txt || echo "enable_uart=1" >> /boot/config.txt
+# sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ /boot/config.txt
+# sed -i s/^\#hdmi_group=1/hdmi_group=2/ /boot/config.txt
+# sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ /boot/config.txt
+# grep -qxF 'enable_uart=1' /boot/config.txt || echo "enable_uart=1" >> /boot/config.txt
+sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ $boot
+sed -i s/^\#hdmi_group=1/hdmi_group=2/ $boot
+sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ $boot
+grep -qxF 'enable_uart=1' $boot || echo "enable_uart=1" >> $boot
 echo $NAME > /etc/hostname
 sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1\t$NAME/g /etc/hosts
 echo "Installing Teamviewer host"
 # wget https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb ## Current 15.38.3 breaks teamviewer on pi so old version required
 # dpkg -i teamviewer-host_armhf.deb >/dev/null 2>&1
-wget https://dl.teamviewer.com/download/linux/version_15x/teamviewer-host_15.35.7_armhf.deb
-dpkg -i teamviewer-host_15.35.7_armhf.deb >/dev/null 2>&1
+# wget https://dl.teamviewer.com/download/linux/version_15x/teamviewer-host_15.35.7_armhf.deb
+# dpkg -i teamviewer-host_15.35.7_armhf.deb >/dev/null 2>&1
+wget $tvpi
+dpkg -i $tvi >/dev/null 2>&1
 apt -y --fix-broken install
 teamviewer passwd easytr1dent25 >/dev/null 2>&1
 TVID=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//')
-# ask if using controllable fan and then set parameters in /boot/config.txt if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
+# ask if using controllable fan and then set parameters in /boot/config.txt or /boot/firmware/config.txt depending on version if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
 if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
     then
         echo "${tyellow}Please ensure Fan is manually enabled if required or install appropriate controls for Fan accessory in use.${tdef}"
     else
-        echo "# Fan speed control start at 55C" >> /boot/config.txt
-        echo "dtoverlay=gpio-fan,gpiopin=18,temp=55000" >> /boot/config.txt
+        # echo "# Fan speed control start at 55C" >> /boot/config.txt
+        # echo "dtoverlay=gpio-fan,gpiopin=18,temp=55000" >> /boot/config.txt
+        echo "# Fan speed control start at 55C" >> $boot
+        echo "dtoverlay=gpio-fan,gpiopin=18,temp=55000" >> $boot
 fi
-if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi (wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip), if instructions have changed then say no?") ]
+if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi 4 (wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip) or Pi 5 (wget http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip -O- |sudo bash;), if instructions have changed then say no?") ]
     then
         echo "${tred}Please go to 3cx website for latest instructions to install SBC/PBX and continue manually.${tdef}"
         echo "${tyellow}Don't forget to reboot and complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
@@ -124,7 +140,8 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi (wget https:/
         echo "Goodbye"
     exit 0
 fi
-/usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
+# /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
+/usr/bin/sudu -c "$("$sbci")"
 echo "${tyellow}Don't forget to reboot and then complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
 echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
 echo "${tyellow}Monitoring hostname =${tdef} $NAME"
