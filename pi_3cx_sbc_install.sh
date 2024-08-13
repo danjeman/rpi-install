@@ -85,7 +85,7 @@ if [[ "$platform" == "arm64" ]]
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
     tvi=teamviewer-host_armhf.deb
     boot=/boot/config.txt
-    sbci="wget -qO- https://downloads-global.3cx.com/downloads/misc/d10pi.zip"
+    sbci="wget -qO- http://downloads-global.3cx.com/downloads/misc/d10pi.zip"
     fi
 
 echo "setting user pi password..."
@@ -152,7 +152,7 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi 4 (wget https
     exit 0
 fi
 # /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
-/usr/bin/sudu -c "$("$sbci")"
+/usr/bin/sudu bash -c "$("$sbci")"
 echo "${tyellow}Don't forget to reboot to finalise settings and then on new login complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
 echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
 echo "${tyellow}Monitoring hostname =${tdef} $NAME"
