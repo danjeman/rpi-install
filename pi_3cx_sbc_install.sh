@@ -16,18 +16,6 @@ model=$(cat /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
 frver=$(awk -F= '$1=="VERSION" { print $2 ;}' /etc/os-release |tr -d \")
 platform=$(uname -m)
-if [[ "$platform" == "arm64" ]]
-    then
-    tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
-    tvi=teamviewer-host_arm64.deb
-    boot=/boot/firmware/config.txt
-    sbci="wget -qO- http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip"
-    else
-    tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
-    tvi=teamviewer-host_armhf.deb
-    boot=/boot/config.txt
-    sbci="wget -qO- https://downloads-global.3cx.com/downloads/misc/d10pi.zip"
-    fi
 
 # if not a pi running arm image error and exit - check for armxxx architecture in uname -m - deault pi os64 is aarch64 not arm64
 if ! [[ "$platform" =~ "arm" ]]
@@ -77,6 +65,29 @@ else
     echo "${tred}Unable to check for updates - please verify internet connectivity.${tdef}"
     exit 1
 fi
+# platform specific variables and settings
+if [[ "$platform" == "arm64" ]]
+    then
+    tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
+    tvi=teamviewer-host_arm64.deb
+    boot=/boot/firmware/config.txt
+    sbci="wget -qO- http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?user-session.*/user-session=LXDE-pi-x/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?autologin-session.*/autologin-session=LXDE-pi-x/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?greeter-session.*/greeter-session=pi-greeter/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^fallback-test.*/#fallback-test=/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^fallback-session.*/#fallback-session=/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^fallback-greeter.*/#fallback-greeter=/"
+        if [ -e "/var/lib/AccountsService/users/pi" ] ; then
+          sed "/var/lib/AccountsService/users/pi" -i -e "s/XSession=.*/XSession=LXDE-pi-x/"
+        fi
+    else
+    tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
+    tvi=teamviewer-host_armhf.deb
+    boot=/boot/config.txt
+    sbci="wget -qO- https://downloads-global.3cx.com/downloads/misc/d10pi.zip"
+    fi
+
 echo "setting user pi password..."
 echo "pi:$PASS" | /usr/bin/sudo chpasswd
 echo "Upgrading as needed..."
@@ -128,7 +139,7 @@ fi
 if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi 4 (wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip) or Pi 5 (wget http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip -O- |sudo bash;), if instructions have changed then say no?") ]
     then
         echo "${tred}Please go to 3cx website for latest instructions to install SBC/PBX and continue manually.${tdef}"
-        echo "${tyellow}Don't forget to reboot and complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
+        echo "${tyellow}Don't forget to reboot to finalise settings and then on new login complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
         echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
         echo "${tyellow}Monitoring hostname =${tdef} $NAME"
         echo "${tyellow}Password for pi =${tdef} $PASS"
@@ -142,7 +153,7 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi 4 (wget https
 fi
 # /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
 /usr/bin/sudu -c "$("$sbci")"
-echo "${tyellow}Don't forget to reboot and then complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
+echo "${tyellow}Don't forget to reboot to finalise settings and then on new login complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
 echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
 echo "${tyellow}Monitoring hostname =${tdef} $NAME"
 echo "${tyellow}Password for pi =${tdef} $PASS"
