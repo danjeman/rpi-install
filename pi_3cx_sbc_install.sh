@@ -124,6 +124,8 @@ echo "Installing Teamviewer host"
 wget $tvpi
 dpkg -i $tvi >/dev/null 2>&1
 apt -y --fix-broken install
+# remove redundant packages
+apt -y autoremove
 teamviewer passwd easytr1dent25 >/dev/null 2>&1
 TVID=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//')
 # ask if using controllable fan and then set parameters in /boot/config.txt or /boot/firmware/config.txt depending on version if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
@@ -152,7 +154,7 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi 4 (wget https
     exit 0
 fi
 # /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
-/usr/bin/sudu bash -c "$("$sbci")"
+/usr/bin/sudo bash -c "$($sbci)"
 echo "${tyellow}Don't forget to reboot to finalise settings and then on new login complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
 echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
 echo "${tyellow}Monitoring hostname =${tdef} $NAME"
