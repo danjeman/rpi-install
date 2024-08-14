@@ -72,24 +72,26 @@ fi
 # platform specific variables and settings
 if [[ "$platform" == "arm64" || "$platform" =~ "aarch64" ]]
     then
+    # Add desktop and browser to OS lite image
     /usr/bin/sudo /usr/bin/apt -y install raspberrypi-ui-mods
+    /usr/bin/sudo /usr/bin/apt -y install chromium
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
     tvi=teamviewer-host_arm64.deb
     boot=/boot/firmware/config.txt
     sbci="wget -qO- http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip"
     cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
-    [Service]
-    ExecStart=
-    ExecStart=-/sbin/agetty --autologin $USER --noclear %I \$TERM
-    EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $USER --noclear %I \$TERM
+EOF
     cat > /etc/xdg/autostart/vnc_xrandr.desktop << EOF
-    [Desktop Entry]
-    Type=Application
-    Name=vnc_xrandr
-    Comment=Set resolution for VNC
-    NoDisplay=true
-    Exec=sh -c "if ! (xrandr | grep -q -w connected) ; then /usr/bin/xrandr --fb 1024x768 ; fi"
-    EOF
+[Desktop Entry]
+Type=Application
+Name=vnc_xrandr
+Comment=Set resolution for VNC
+NoDisplay=true
+Exec=sh -c "if ! (xrandr | grep -q -w connected) ; then /usr/bin/xrandr --fb 1024x768 ; fi"
+EOF
     sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?user-session.*/user-session=LXDE-pi-x/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^\(#\|\)autologin-user=.*/autologin-user=pi/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?autologin-session.*/autologin-session=LXDE-pi-x/"
@@ -100,15 +102,21 @@ if [[ "$platform" == "arm64" || "$platform" =~ "aarch64" ]]
         if [ -e "/var/lib/AccountsService/users/pi" ] ; then
           sed "/var/lib/AccountsService/users/pi" -i -e "s/XSession=.*/XSession=LXDE-pi-x/"
         fi
-        echo "This is running as platform $platform"
-        echo "and will use $sbci"
+        if ! [[ "$debug" == "0" ]]
+        then
+            echo "This is running as platform $platform"
+            echo "and will use $sbci"
+        fi
     else
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
     tvi=teamviewer-host_armhf.deb
     boot=/boot/config.txt
     sbci="wget -qO- http://downloads-global.3cx.com/downloads/misc/d10pi.zip"
-    echo "This is running as platform $platform"
-    echo "and will use $sbci"
+    if ! [[ "$debug" == "0" ]]
+        then
+        echo "This is running as platform $platform"
+        echo "and will use $sbci"
+        fi
     fi
 
 echo "setting user pi password..."
@@ -117,7 +125,7 @@ echo "Upgrading as needed..."
 /usr/bin/sudo /usr/bin/apt -y upgrade
 echo "Installing monitoring agent..."
 /usr/bin/sudo /usr/bin/apt -y install zabbix-agent nmap tcpdump
-echo "system updated and zabbix monitoring agent and network tools installed."
+echo "${tgreen}System updated and zabbix monitoring agent and network tools installed.${tdef}"
 echo "Configuring monitoring agent..."
 # edit zabbix_agentd.conf set zabbix server IP to 213.218.197.155 set hostname to $NAME
 sed -i s/^Server=127.0.0.1/Server=213.218.197.155/ /etc/zabbix/zabbix_agentd.conf
@@ -155,7 +163,7 @@ if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon 
         echo "# Fan speed control start at 55C" >> $boot
         echo "dtoverlay=gpio-fan,gpiopin=18,temp=55000" >> $boot
 fi
-if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi 4 (wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip) or Pi 5 (wget http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip -O- |sudo bash;), if instructions have changed then say no?") ]
+if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX, for Raspberry Pi 4 uses (wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip) or for Pi 5 uses (wget http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip -O- |sudo bash;), if instructions have changed then say no?") ]
     then
         echo "${tred}Please go to 3cx website for latest instructions to install SBC/PBX and continue manually.${tdef}"
         echo "${tyellow}Don't forget to reboot to finalise settings and then on new login complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
