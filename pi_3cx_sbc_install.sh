@@ -12,7 +12,7 @@ tyellow=$(tput setaf 3)
 tdef=$(tput sgr0)
 MAC=$(cat /sys/class/net/eth0/address)
 PASS=e4syTr1d3nt
-model=$(tr -d '\0' /proc/device-tree/model)
+model=$(tr -d '\0' < /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
 frver=$(awk -F= '$1=="VERSION" { print $2 ;}' /etc/os-release |tr -d \")
 platform=$(uname -m)
@@ -51,6 +51,8 @@ if [ "no" == $(ask_yes_or_no "Set pi user password to IBT default?") ]
           exit 0
         fi
 fi
+echo "Checking and updating bootloader if available - ensure to reboot at the end to complete!"
+sudo rpi-eeprom-update -a
 echo "Great, continuing to update packages and install monitoring..."
 echo "Checking for updates..."
 # Detect if buster or bookworm and set options depending on $model
@@ -75,7 +77,21 @@ if [[ "$platform" == "arm64" || "$platform" =~ "aarch64" ]]
     tvi=teamviewer-host_arm64.deb
     boot=/boot/firmware/config.txt
     sbci="wget -qO- http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip"
+    cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+    [Service]
+    ExecStart=
+    ExecStart=-/sbin/agetty --autologin $USER --noclear %I \$TERM
+    EOF
+    cat > /etc/xdg/autostart/vnc_xrandr.desktop << EOF
+    [Desktop Entry]
+    Type=Application
+    Name=vnc_xrandr
+    Comment=Set resolution for VNC
+    NoDisplay=true
+    Exec=sh -c "if ! (xrandr | grep -q -w connected) ; then /usr/bin/xrandr --fb 1024x768 ; fi"
+    EOF
     sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?user-session.*/user-session=LXDE-pi-x/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^\(#\|\)autologin-user=.*/autologin-user=pi/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?autologin-session.*/autologin-session=LXDE-pi-x/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?greeter-session.*/greeter-session=pi-greeter/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^fallback-test.*/#fallback-test=/"
@@ -111,14 +127,16 @@ sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
 /usr/sbin/usermod -a -G video zabbix
 /usr/bin/sudo /usr/sbin/service zabbix-agent restart
 echo "${tgreen}Monitoring agent configured.${tdef}"
-# Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config enable uart if not already
-echo "Setting display resolution to 1023x768 for remote Teamviewer access"
+# Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config enable uart if not already - pi 5 handled differently but not in config.txt so can leave for now
+echo "Setting display resolution to 1024x768 for remote Teamviewer access"
 sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ $boot
 sed -i s/^\#hdmi_group=1/hdmi_group=2/ $boot
 sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ $boot
 grep -qxF 'enable_uart=1' $boot || echo "enable_uart=1" >> $boot
 echo $NAME > /etc/hostname
-sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1\t$NAME/g /etc/hosts
+# in case already changed hostname better to add another resolution than replace, maybe... can look at cleaning up if causes other issues but should be better while processing first run
+# sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1    $NAME/g /etc/hosts
+echo "127.0.0.1    $NAME" >> /etc/hosts
 echo "Installing Teamviewer host"
 wget $tvpi
 dpkg -i $tvi >/dev/null 2>&1
