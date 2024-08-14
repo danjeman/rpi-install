@@ -56,7 +56,7 @@ for line in file:lines() do
 end
 EOF
 mv "$2.bak" "$2"
-
+}
 
 get_config_var() {
   lua - "$1" "$2" <<EOF
@@ -76,6 +76,7 @@ if not found then
    print(0)
 end
 EOF
+}
 
 # if not a pi running arm image error and exit - check for armxxx architecture in uname -m - deault pi os64 is aarch64 not arm64
 if ! [[ "$platform" =~ "arm" || "$platform" = "aarch64" ]]
@@ -195,7 +196,7 @@ EOF
     sbci="wget -qO- http://downloads-global.3cx.com/downloads/misc/d10pi.zip"
     
     # Set resolution - ask for which
-      if [ "$INTERACTIVE" = True ]; then
+    if [ "$INTERACTIVE" = True ]; then
     CMODE=$(get_config_var hdmi_mode $boot)
     CGROUP=$(get_config_var hdmi_group $boot)
     if [ $CMODE -eq 0 ] ; then
