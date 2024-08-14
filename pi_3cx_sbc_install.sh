@@ -12,15 +12,73 @@ tyellow=$(tput setaf 3)
 tdef=$(tput sgr0)
 MAC=$(cat /sys/class/net/eth0/address)
 PASS=e4syTr1d3nt
+USER=pi
 model=$(tr -d '\0' < /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
 frver=$(awk -F= '$1=="VERSION" { print $2 ;}' /etc/os-release |tr -d \")
 platform=$(uname -m)
+INTERACTIVE=True
 # debug option 0 no debug 1 basic 2 full
 debug=0
 
+set_config_var() {
+  lua - "$1" "$2" "$3" <<EOF > "$3.bak"
+local key=assert(arg[1])
+local value=assert(arg[2])
+local fn=assert(arg[3])
+local file=assert(io.open(fn))
+local made_change=false
+for line in file:lines() do
+  if line:match("^#?%s*"..key.."=.*$") then
+    line=key.."="..value
+    made_change=true
+  end
+  print(line)
+end
+
+if not made_change then
+  print(key.."="..value)
+end
+EOF
+mv "$3.bak" "$3"
+}
+
+clear_config_var() {
+  lua - "$1" "$2" <<EOF > "$2.bak"
+local key=assert(arg[1])
+local fn=assert(arg[2])
+local file=assert(io.open(fn))
+for line in file:lines() do
+  if line:match("^%s*"..key.."=.*$") then
+    line="#"..line
+  end
+  print(line)
+end
+EOF
+mv "$2.bak" "$2"
+
+
+get_config_var() {
+  lua - "$1" "$2" <<EOF
+local key=assert(arg[1])
+local fn=assert(arg[2])
+local file=assert(io.open(fn))
+local found=false
+for line in file:lines() do
+  local val = line:match("^%s*"..key.."=(.*)$")
+  if (val ~= nil) then
+    print(val)
+    found=true
+    break
+  end
+end
+if not found then
+   print(0)
+end
+EOF
+
 # if not a pi running arm image error and exit - check for armxxx architecture in uname -m - deault pi os64 is aarch64 not arm64
-if ! [[ "$platform" =~ "arm" || "$platform" =~ "aarch64" ]]
+if ! [[ "$platform" =~ "arm" || "$platform" = "aarch64" ]]
 then
     echo "This install script is for Raspberry Pi's only, please use the correct script for your hardware"
     exit 1
@@ -69,8 +127,13 @@ else
     echo "${tred}Unable to check for updates - please verify internet connectivity.${tdef}"
     exit 1
 fi
+
+# option to set screen resolution TVRES - 640x480, 720x480, 800x600, 1024x768, 1280x720, 1280x1024, 1600x1200 and 1920x1080 supported on pi 5
+# pi 4 options TVMODE Default/720x480/DMT Mode 4/640x480 60Hz 4:3/DMT Mode 9/800x600 60Hz 4:3/DMT Mode 16/1024x768 60Hz 4:3/DMT Mode 85/1280x720 60Hz 16:9/DMT Mode 35/1280x1024 60Hz 5:4/DMT Mode 51/1600x1200 60Hz 4:3/DMT Mode 82/1920x1080 60Hz 16:9/
+
+
 # platform specific variables and settings
-if [[ "$platform" == "arm64" || "$platform" =~ "aarch64" ]]
+if [[ "$platform" = "arm64" || "$platform" = "aarch64" ]]
     then
     # Add desktop and browser to OS lite image
     /usr/bin/sudo /usr/bin/apt -y install raspberrypi-ui-mods
@@ -79,40 +142,123 @@ if [[ "$platform" == "arm64" || "$platform" =~ "aarch64" ]]
     tvi=teamviewer-host_arm64.deb
     boot=/boot/firmware/config.txt
     sbci="wget -qO- http://downloads-global.3cx.com/downloads/sbc/3cxsbc.zip"
-    cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin $USER --noclear %I \$TERM
-EOF
+    # Set resolution for TeamViewer Headless - options to select or default to
+    get_tv_resolution() {
+    if [ -e /etc/xdg/autostart/vnc_xrandr.desktop ] ; then
+        grep fb /etc/xdg/autostart/vnc_xrandr.desktop | cut -f 15 -d ' '
+    else
+        echo "640x480"
+    fi
+    }
+    if [ "$INTERACTIVE" = True ]; then
+    CUR=$(get_tv_resolution)
+    # ask to set resolution for TeamViewer
+    TVRES=$(whiptail --title "IBT Pi 3CX SBC Configuration Tool" --default-item $CUR --menu "Set Teamviewer Screen Resolution" --ok-button Select \
+    "640x480" "" "720x480" "" "800x600" "" "1024x768" "" "1280x720" "" "1280x1024" "" "1600x1200" "" "1920x1080" "" 3>&1 1>&2 2>&3)
+    fi
     cat > /etc/xdg/autostart/vnc_xrandr.desktop << EOF
 [Desktop Entry]
 Type=Application
 Name=vnc_xrandr
 Comment=Set resolution for VNC
 NoDisplay=true
-Exec=sh -c "if ! (xrandr | grep -q -w connected) ; then /usr/bin/xrandr --fb 1024x768 ; fi"
+Exec=sh -c "if ! (xrandr | grep -q -w connected) ; then /usr/bin/xrandr --fb $TVRES ; fi"
+EOF
+    cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $USER --noclear %I \$TERM
 EOF
     /usr/bin/systemctl --quiet set-default graphical.target
     sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?user-session.*/user-session=LXDE-pi-x/"
-    sed /etc/lightdm/lightdm.conf -i -e "s/^\(#\|\)autologin-user=.*/autologin-user=pi/"
+    sed /etc/lightdm/lightdm.conf -i -e "s/^\(#\|\)autologin-user=.*/autologin-user=$USER/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?autologin-session.*/autologin-session=LXDE-pi-x/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^#\\?greeter-session.*/greeter-session=pi-greeter/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^fallback-test.*/#fallback-test=/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^fallback-session.*/#fallback-session=/"
     sed /etc/lightdm/lightdm.conf -i -e "s/^fallback-greeter.*/#fallback-greeter=/"
-        if [ -e "/var/lib/AccountsService/users/pi" ] ; then
-          sed "/var/lib/AccountsService/users/pi" -i -e "s/XSession=.*/XSession=LXDE-pi-x/"
+        if [ -e "/var/lib/AccountsService/users/$USER" ] ; then
+          sed "/var/lib/AccountsService/users/$USER" -i -e "s/XSession=.*/XSession=LXDE-pi-x/"
         fi
         if ! [[ "$debug" == "0" ]]
         then
             echo "This is running as platform $platform"
             echo "and will use $sbci"
         fi
+    if [ "$INTERACTIVE" = True ]; then
+      whiptail --msgbox "The resolution is set to $TVRES" 20 60 1
+    fi
     else
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
     tvi=teamviewer-host_armhf.deb
     boot=/boot/config.txt
     sbci="wget -qO- http://downloads-global.3cx.com/downloads/misc/d10pi.zip"
+    
+    # Set resolution - ask for which
+      if [ "$INTERACTIVE" = True ]; then
+    CMODE=$(get_config_var hdmi_mode $boot)
+    CGROUP=$(get_config_var hdmi_group $boot)
+    if [ $CMODE -eq 0 ] ; then
+      CSET="Default"
+    elif [ $CGROUP -eq 2 ] ; then
+      CSET="DMT Mode "$CMODE
+    else
+      CSET="CEA Mode "$CMODE
+    fi
+    oIFS="$IFS"
+    IFS="/"
+    if tvservice -d /dev/null | grep -q Nothing ; then
+      value="Default/720x480/DMT Mode 4/640x480 60Hz 4:3/DMT Mode 9/800x600 60Hz 4:3/DMT Mode 16/1024x768 60Hz 4:3/DMT Mode 85/1280x720 60Hz 16:9/DMT Mode 35/1280x1024 60Hz 5:4/DMT Mode 51/1600x1200 60Hz 4:3/DMT Mode 82/1920x1080 60Hz 16:9/"
+    else
+      value="Default/Monitor preferred resolution/"
+      value=$value$(tvservice -m CEA | grep progressive | cut -b 12- | sed 's/mode \([0-9]\+\): \([0-9]\+\)x\([0-9]\+\) @ \([0-9]\+\)Hz \([0-9]\+\):\([0-9]\+\), clock:[0-9]\+MHz progressive/CEA Mode \1\/\2x\3 \4Hz \5:\6/' | tr '\n' '/')
+      value=$value$(tvservice -m DMT | grep progressive | cut -b 12- | sed 's/mode \([0-9]\+\): \([0-9]\+\)x\([0-9]\+\) @ \([0-9]\+\)Hz \([0-9]\+\):\([0-9]\+\), clock:[0-9]\+MHz progressive/DMT Mode \1\/\2x\3 \4Hz \5:\6/' | tr '\n' '/')
+    fi
+    RES=$(whiptail --default-item $CSET --menu "Choose screen resolution" 20 60 10 ${value} 3>&1 1>&2 2>&3)
+    STATUS=$?
+    IFS="$oIFS"
+    if [ $STATUS -eq 0 ] ; then
+      GRS=$(echo "$RES" | cut -d ' ' -f 1)
+      MODE=$(echo "$RES" | cut -d ' ' -f 3)
+      if [ $GRS = "Default" ] ; then
+        MODE=0
+      elif [ $GRS = "DMT" ] ; then
+        GROUP=2
+      else
+        GROUP=1
+      fi
+    fi
+  else
+    GROUP=$1
+    MODE=$2
+    STATUS=0
+  fi
+  if [ $STATUS -eq 0 ]; then
+    if [ $MODE -eq 0 ]; then
+      clear_config_var hdmi_force_hotplug $boot
+      clear_config_var hdmi_group $boot
+      clear_config_var hdmi_mode $boot
+    else
+      set_config_var hdmi_force_hotplug 1 $boot
+      set_config_var hdmi_group $GROUP $boot
+      set_config_var hdmi_mode $MODE $boot
+    fi
+    if [ "$INTERACTIVE" = True ]; then
+      if [ $MODE -eq 0 ] ; then
+        whiptail --msgbox "The resolution is set to default" 20 60 1
+      else
+        whiptail --msgbox "The resolution is set to $GRS mode $MODE" 20 60 1
+      fi
+    fi
+    if [ $MODE -eq 0 ] ; then
+      TSET="Default"
+    elif [ $GROUP -eq 2 ] ; then
+      TSET="DMT Mode "$MODE
+    else
+      TSET="CEA Mode "$MODE
+    fi
+  fi
+  
     if ! [[ "$debug" == "0" ]]
         then
         echo "This is running as platform $platform"
@@ -136,11 +282,6 @@ sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
 /usr/sbin/usermod -a -G video zabbix
 /usr/bin/sudo /usr/sbin/service zabbix-agent restart
 echo "${tgreen}Monitoring agent configured.${tdef}"
-# Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config enable uart if not already - pi 5 handled differently but not in config.txt so can leave for now
-echo "Setting display resolution to 1024x768 for remote Teamviewer access"
-sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ $boot
-sed -i s/^\#hdmi_group=1/hdmi_group=2/ $boot
-sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ $boot
 grep -qxF 'enable_uart=1' $boot || echo "enable_uart=1" >> $boot
 echo $NAME > /etc/hostname
 # in case already changed hostname better to add another resolution than replace, maybe... can look at cleaning up if causes other issues but should be better while processing first run
