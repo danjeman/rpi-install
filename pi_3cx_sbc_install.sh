@@ -51,7 +51,7 @@ if [ "no" == $(ask_yes_or_no "Set pi user password to IBT default?") ]
           exit 0
         fi
 fi
-echo "Checking and updating bootloader if available - ensure to reboot at the end to complete!"
+echo "${tyellow}Checking and updating bootloader if available - ensure to reboot at the end to complete!${tdef}"
 sudo rpi-eeprom-update -a
 echo "Great, continuing to update packages and install monitoring..."
 echo "Checking for updates..."
