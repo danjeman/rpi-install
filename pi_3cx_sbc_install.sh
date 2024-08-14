@@ -154,7 +154,7 @@ if [[ "$platform" = "arm64" || "$platform" = "aarch64" ]]
     if [ "$INTERACTIVE" = True ]; then
     CUR=$(get_tv_resolution)
     # ask to set resolution for TeamViewer
-    TVRES=$(whiptail --title "IBT Pi 3CX SBC Configuration Tool" --default-item $CUR --menu "Set Teamviewer Screen Resolution" --ok-button Select \
+    TVRES=$(whiptail --title "IBT Pi 3CX SBC Configuration Tool" --default-item $CUR --menu "Set Teamviewer Screen Resolution" 17 60 9 --ok-button Select \
     "640x480" "" "720x480" "" "800x600" "" "1024x768" "" "1280x720" "" "1280x1024" "" "1600x1200" "" "1920x1080" "" 3>&1 1>&2 2>&3)
     fi
     cat > /etc/xdg/autostart/vnc_xrandr.desktop << EOF
