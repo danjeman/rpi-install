@@ -16,6 +16,8 @@ model=$(tr -d '\0' /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
 frver=$(awk -F= '$1=="VERSION" { print $2 ;}' /etc/os-release |tr -d \")
 platform=$(uname -m)
+# debug option 0 no debug 1 basic 2 full
+debug=0
 
 # if not a pi running arm image error and exit - check for armxxx architecture in uname -m - deault pi os64 is aarch64 not arm64
 if ! [[ "$platform" =~ "arm" || "$platform" =~ "aarch64" ]]
@@ -83,13 +85,14 @@ if [[ "$platform" == "arm64" || "$platform" =~ "aarch64" ]]
           sed "/var/lib/AccountsService/users/pi" -i -e "s/XSession=.*/XSession=LXDE-pi-x/"
         fi
         echo "This is running as platform $platform"
+        echo "and will use $sbci"
     else
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
     tvi=teamviewer-host_armhf.deb
     boot=/boot/config.txt
     sbci="wget -qO- http://downloads-global.3cx.com/downloads/misc/d10pi.zip"
     echo "This is running as platform $platform"
-    echo "and will use $sbci
+    echo "and will use $sbci"
     fi
 
 echo "setting user pi password..."
