@@ -18,7 +18,7 @@ frver=$(awk -F= '$1=="VERSION" { print $2 ;}' /etc/os-release |tr -d \")
 platform=$(uname -m)
 
 # if not a pi running arm image error and exit - check for armxxx architecture in uname -m - deault pi os64 is aarch64 not arm64
-if ! [[ "$platform" =~ "arm" ]]
+if ! [[ "$platform" =~ "arm" || "$platform" == "aarch64" ]]
 then
     echo "This install script is for Raspberry Pi's only, please use the correct script for your hardware"
     exit 1
@@ -66,7 +66,7 @@ else
     exit 1
 fi
 # platform specific variables and settings
-if [[ "$platform" == "arm64" ]]
+if [[ "$platform" == "arm64" || "$platform" == "aarch64" ]]
     then
     apt install raspberrypi-ui-mods
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
@@ -107,10 +107,6 @@ sed -i s/^\#.Hostname=/Hostname=$NAME/ /etc/zabbix/zabbix_agentd.conf
 echo "${tgreen}Monitoring agent configured.${tdef}"
 # Set display resolution to permit TV host to work otherwise nothing to display - either edit /boot/config.txt or just use raspi-config enable uart if not already
 echo "Setting display resolution to 1023x768 for remote Teamviewer access"
-# sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ /boot/config.txt
-# sed -i s/^\#hdmi_group=1/hdmi_group=2/ /boot/config.txt
-# sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ /boot/config.txt
-# grep -qxF 'enable_uart=1' /boot/config.txt || echo "enable_uart=1" >> /boot/config.txt
 sed -i s/^\#hdmi_force_hotplug=1/hdmi_force_hotplug=1/ $boot
 sed -i s/^\#hdmi_group=1/hdmi_group=2/ $boot
 sed -i s/^\#hdmi_mode=1/hdmi_mode=16/ $boot
@@ -118,10 +114,6 @@ grep -qxF 'enable_uart=1' $boot || echo "enable_uart=1" >> $boot
 echo $NAME > /etc/hostname
 sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1\t$NAME/g /etc/hosts
 echo "Installing Teamviewer host"
-# wget https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb ## Current 15.38.3 breaks teamviewer on pi so old version required
-# dpkg -i teamviewer-host_armhf.deb >/dev/null 2>&1
-# wget https://dl.teamviewer.com/download/linux/version_15x/teamviewer-host_15.35.7_armhf.deb
-# dpkg -i teamviewer-host_15.35.7_armhf.deb >/dev/null 2>&1
 wget $tvpi
 dpkg -i $tvi >/dev/null 2>&1
 apt -y --fix-broken install
