@@ -12,13 +12,13 @@ tyellow=$(tput setaf 3)
 tdef=$(tput sgr0)
 MAC=$(cat /sys/class/net/eth0/address)
 PASS=e4syTr1d3nt
-model=$(cat /proc/device-tree/model)
+model=$(tr -d '\0' /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
 frver=$(awk -F= '$1=="VERSION" { print $2 ;}' /etc/os-release |tr -d \")
 platform=$(uname -m)
 
 # if not a pi running arm image error and exit - check for armxxx architecture in uname -m - deault pi os64 is aarch64 not arm64
-if ! [[ "$platform" =~ "arm" || "$platform" == "aarch64" ]]
+if ! [[ "$platform" =~ "arm" || "$platform" =~ "aarch64" ]]
 then
     echo "This install script is for Raspberry Pi's only, please use the correct script for your hardware"
     exit 1
@@ -66,9 +66,9 @@ else
     exit 1
 fi
 # platform specific variables and settings
-if [[ "$platform" == "arm64" || "$platform" == "aarch64" ]]
+if [[ "$platform" == "arm64" || "$platform" =~ "aarch64" ]]
     then
-    apt install raspberrypi-ui-mods
+    /usr/bin/sudo /usr/bin/apt -y install raspberrypi-ui-mods
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_arm64.deb
     tvi=teamviewer-host_arm64.deb
     boot=/boot/firmware/config.txt
@@ -82,11 +82,14 @@ if [[ "$platform" == "arm64" || "$platform" == "aarch64" ]]
         if [ -e "/var/lib/AccountsService/users/pi" ] ; then
           sed "/var/lib/AccountsService/users/pi" -i -e "s/XSession=.*/XSession=LXDE-pi-x/"
         fi
+        echo "This is running as platform $platform"
     else
     tvpi=https://download.teamviewer.com/download/linux/teamviewer-host_armhf.deb
     tvi=teamviewer-host_armhf.deb
     boot=/boot/config.txt
     sbci="wget -qO- http://downloads-global.3cx.com/downloads/misc/d10pi.zip"
+    echo "This is running as platform $platform"
+    echo "and will use $sbci
     fi
 
 echo "setting user pi password..."
@@ -116,9 +119,9 @@ sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1\t$NAME/g /etc/hosts
 echo "Installing Teamviewer host"
 wget $tvpi
 dpkg -i $tvi >/dev/null 2>&1
-apt -y --fix-broken install
+/usr/bin/sudo /usr/bin/apt -y --fix-broken install
 # remove redundant packages
-apt -y autoremove
+/usr/bin/sudo /usr/bin/apt -y autoremove
 teamviewer passwd easytr1dent25 >/dev/null 2>&1
 TVID=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//')
 # ask if using controllable fan and then set parameters in /boot/config.txt or /boot/firmware/config.txt depending on version if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
@@ -146,7 +149,6 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX for Raspberry Pi 4 (wget https
         echo "Goodbye"
     exit 0
 fi
-# /usr/bin/sudo wget https://downloads-global.3cx.com/downloads/misc/d10pi.zip; sudo bash d10pi.zip
 /usr/bin/sudo bash -c "$($sbci)"
 echo "${tyellow}Don't forget to reboot to finalise settings and then on new login complete Teamviewer setup process - \"teamviewer setup\" to add this device to the IBT account.${tdef}"
 echo "Below is a list of the info used for this setup - ${tred}take note for job sheet/asset info.${tdef}"
