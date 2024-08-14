@@ -146,13 +146,16 @@ echo $NAME > /etc/hostname
 # sed -i s/^127.0.1.1.*raspberrypi/127.0.1.1    $NAME/g /etc/hosts
 echo "127.0.0.1    $NAME" >> /etc/hosts
 echo "Installing Teamviewer host"
-wget $tvpi
-dpkg -i $tvi >/dev/null 2>&1
+# remove old tv downloads as new would not be installed
+/usr/bin/rm -f teamviewer-host*
+/usr/bin/wget $tvpi
+/usr/bin/dpkg -i $tvi >/dev/null 2>&1
 /usr/bin/sudo /usr/bin/apt -y --fix-broken install
 # remove redundant packages
 /usr/bin/sudo /usr/bin/apt -y autoremove
 teamviewer passwd easytr1dent25 >/dev/null 2>&1
-TVID=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//')
+TVID=$(/usr/bin/sudo teamviewer info | grep "TeamViewer ID:" | sed 's/^.*: \s*//' | tr -d ' ')
+TVVER=$(/usr/bin/sudo teamviewer version | grep "TeamViewer" | sed 's/^.*TeamViewer \s*//' |tr -d ' ')
 # ask if using controllable fan and then set parameters in /boot/config.txt or /boot/firmware/config.txt depending on version if yes - dtoverlay=gpio-fan,gpiopin=18,temp=55000
 if [ "no" == $(ask_yes_or_no "Install temperature based speed control for Argon mini Fan?") ]
     then
@@ -171,6 +174,7 @@ if [ "no" == $(ask_yes_or_no "Install 3cx SBC/PBX, for Raspberry Pi 4 uses (wget
         echo "${tyellow}Monitoring hostname =${tdef} $NAME"
         echo "${tyellow}Password for pi =${tdef} $PASS"
         echo "${tyellow}Teamviewer ID =${tdef} $TVID"
+        echo "${tyellow}Teamviewer Version =${tdef} $TVVER"
         echo "${tyellow}MAC address =${tdef} $MAC."
         echo "${tyellow}Model =${tdef} $model."
         echo "${tyellow}Debian ver =${tdef} $frver."
@@ -184,6 +188,7 @@ echo "Below is a list of the info used for this setup - ${tred}take note for job
 echo "${tyellow}Monitoring hostname =${tdef} $NAME"
 echo "${tyellow}Password for pi =${tdef} $PASS"
 echo "${tyellow}Teamviewer ID =${tdef} $TVID"
+echo "${tyellow}Teamviewer Version =${tdef} $TVVER"
 echo "${tyellow}MAC address =${tdef} $MAC."
 echo "${tyellow}Model =${tdef} $model."
 echo "${tyellow}Debian ver =${tdef} $frver."
