@@ -1,4 +1,9 @@
 #!/bin/bash
+logfile="/tmp/pi_3cx_sbc_install.sh.$(date +%Y-%m-%d_%H:%M).log"
+# ts needs moreutils package
+# exec 1>> >(ts '[%Y-%m-%d %H:%M:%S]' > "$logfile") 2>&1
+# tee will capture all output but not input but is a start and if script completes will have all details used...
+{
 function ask_yes_or_no() {
     read -p "$1 ([y]es or [N]o): "
     case $(echo $REPLY | tr '[A-Z]' '[a-z]') in
@@ -11,7 +16,7 @@ tgreen=$(tput setaf 2)
 tyellow=$(tput setaf 3)
 tdef=$(tput sgr0)
 MAC=$(cat /sys/class/net/eth0/address)
-PASS=e4syTr1d3nt
+PASS=$(tr -dc 'A-Za-z0-9!?%=' < /dev/urandom | head -c 10)
 USER=pi
 model=$(tr -d '\0' < /proc/device-tree/model)
 version=$(awk -F= '$1=="VERSION_ID" { print $2 ;}' /etc/os-release |tr -d \")
@@ -99,7 +104,8 @@ then
       exit 0
     fi
 fi
-if [ "no" == $(ask_yes_or_no "Set pi user password to IBT default?") ]
+echo "${tyellow}BY DEFAULT A RANDOM PASSWORD WILL BE CREATED FOR USER $USER, select no to create your own!!${tdef}"
+if [ "no" == $(ask_yes_or_no "Generate random password for $USER? - ${tred}ensure to check final output for password used and record!${tdef}") ]
     then
         echo "Please enter password."
         read PASS
@@ -337,3 +343,7 @@ echo "${tyellow}Model =${tdef} $model."
 echo "${tyellow}Debian ver =${tdef} $frver."
 echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
 echo "Goodbye"
+} |tee $logfile
+# Look to email the logfile as a backup too. again needs either sendmail or mail and configuring too maybe look to scp it instead
+# mail $logfile technical@ibt.uk.com
+# scp
