@@ -3,7 +3,7 @@ logfile="/tmp/pi_3cx_sbc_install.sh.$(date +%Y-%m-%d_%H:%M).log"
 # ts needs moreutils package
 # exec 1>> >(ts '[%Y-%m-%d %H:%M:%S]' > "$logfile") 2>&1
 # tee will capture all output but not input but is a start and if script completes will have all details used...
-{
+#{
 function ask_yes_or_no() {
     read -p "$1 ([y]es or [N]o): "
     case $(echo $REPLY | tr '[A-Z]' '[a-z]') in
@@ -343,7 +343,7 @@ echo "${tyellow}Model =${tdef} $model."
 echo "${tyellow}Debian ver =${tdef} $frver."
 echo "${tgreen}Please update helpdesk asset and ticket/job progress sheet.${tdef}"
 echo "Goodbye"
-} |tee $logfile
+#} |tee $logfile
 # Look to email the logfile as a backup too. again needs either sendmail or mail and configuring too maybe look to scp it instead
 # mail $logfile technical@ibt.uk.com
 # scp
