@@ -15,7 +15,7 @@ tred=$(tput setaf 1)
 tgreen=$(tput setaf 2)
 tyellow=$(tput setaf 3)
 tdef=$(tput sgr0)
-MAC=$(cat /sys/class/net/eth0/address)
+MAC=$(cat /sys/class/net/e*/address)
 PASS=$(tr -dc 'A-Za-z0-9!?%=' < /dev/urandom | head -c 10)
 USER=pi
 model=$(tr -d '\0' < /proc/device-tree/model)
